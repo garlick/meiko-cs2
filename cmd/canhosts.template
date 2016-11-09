@@ -1,0 +1,282 @@
+#
+# map cluster,module,node (hex values) <-> hostname
+#
+# Sample canhosts file for a 96-node cluster.
+# Substitute "node" for your cluster name below and install as /etc/canhosts
+#
+# Remember nodes are numbered right to left within a module,
+# so if you obscess about this sort of thing, put module zero on
+# the (lower?) right of the cluster.
+#
+# Can node names should be the same as the hostname.
+# Hardware is assigned L-CAN addresses within a module as follows:
+#    00,04,08,0c   sparc boards, right to left
+#    10,11,12,13   H8 built onto sparc boards, right to left
+#    1d            module controller (little board in the back)
+# Module addresses on the X-CAN are assigned by the thumbwheel on the back 
+# of the module.
+# 
+
+# Module 0
+00,00,00	node0
+00,00,04	node1
+00,00,08	node2
+00,00,0c	node3
+00,00,10	node0-h8
+00,00,11	node1-h8
+00,00,12	node2-h8
+00,00,13	node3-h8
+00,00,1d	mod0-h8
+
+# Module 1
+00,01,00	node4
+00,01,04	node5
+00,01,08	node6
+00,01,0c	node7
+00,01,10	node4-h8
+00,01,11	node5-h8
+00,01,12	node6-h8
+00,01,13	node7-h8
+00,01,1d	mod1-h8
+
+# Module 2
+00,02,00	node8
+00,02,04	node9
+00,02,08	node10
+00,02,0c	node11
+00,02,10	node8-h8
+00,02,11	node9-h8
+00,02,12	node10-h8
+00,02,13	node11-h8
+00,02,1d	mod2-h8
+
+# Module 3
+00,03,00	node12
+00,03,04	node13
+00,03,08	node14
+00,03,0c	node15
+00,03,10	node12-h8
+00,03,11	node13-h8
+00,03,12	node14-h8
+00,03,13	node15-h8
+00,03,1d	mod3-h8
+
+# Module 4
+00,04,00	node16
+00,04,04	node17
+00,04,08	node18
+00,04,0c	node19
+00,04,10	node16-h8
+00,04,11	node17-h8
+00,04,12	node18-h8
+00,04,13	node19-h8
+00,04,1d	mod4-h8
+
+# Module 5
+00,05,00	node20
+00,05,04	node21
+00,05,08	node22
+00,05,0c	node23
+00,05,10	node20-h8
+00,05,11	node21-h8
+00,05,12	node22-h8
+00,05,13	node23-h8
+00,05,1d	mod5-h8
+
+# Module 6
+00,06,00	node24
+00,06,04	node25
+00,06,08	node26
+00,06,0c	node27
+00,06,10	node24-h8
+00,06,11	node25-h8
+00,06,12	node26-h8
+00,06,13	node27-h8
+00,06,1d	mod6-h8
+
+# Module 7
+00,07,00	node28
+00,07,04	node29
+00,07,08	node30
+00,07,0c	node31
+00,07,10	node28-h8
+00,07,11	node29-h8
+00,07,12	node30-h8
+00,07,13	node31-h8
+00,07,1d	mod7-h8
+
+# Module 8
+00,08,00	node32
+00,08,04	node33
+00,08,08	node34
+00,08,0c	node35
+00,08,10	node32-h8
+00,08,11	node33-h8
+00,08,12	node34-h8
+00,08,13	node35-h8
+00,08,1d	mod8-h8
+
+# Module 9
+00,09,00	node36
+00,09,04	node37
+00,09,08	node38
+00,09,0c	node39
+00,09,10	node36-h8
+00,09,11	node37-h8
+00,09,12	node38-h8
+00,09,13	node39-h8
+00,09,1d	mod9-h8
+
+# Module 10
+00,10,00	node40
+00,10,04	node41
+00,10,08	node42
+00,10,0c	node43
+00,10,10	node40-h8
+00,10,11	node41-h8
+00,10,12	node42-h8
+00,10,13	node43-h8
+00,10,1d	mod10-h8
+
+# Module 11
+00,11,00	node44
+00,11,04	node45
+00,11,08	node46
+00,11,0c	node47
+00,11,10	node44-h8
+00,11,11	node45-h8
+00,11,12	node46-h8
+00,11,13	node47-h8
+00,11,1d	mod11-h8
+
+# Module 12
+00,12,00	node48
+00,12,04	node49
+00,12,08	node50
+00,12,0c	node51
+00,12,10	node48-h8
+00,12,11	node49-h8
+00,12,12	node50-h8
+00,12,13	node51-h8
+00,12,1d	mod12-h8
+
+# Module 13
+00,13,00	node52
+00,13,04	node53
+00,13,08	node54
+00,13,0c	node55
+00,13,10	node52-h8
+00,13,11	node53-h8
+00,13,12	node54-h8
+00,13,13	node55-h8
+00,13,1d	mod13-h8
+
+# Module 14
+00,14,00	node56
+00,14,04	node57
+00,14,08	node58
+00,14,0c	node59
+00,14,10	node56-h8
+00,14,11	node57-h8
+00,14,12	node58-h8
+00,14,13	node59-h8
+00,14,1d	mod14-h8
+
+# Module 15
+00,15,00	node60
+00,15,04	node61
+00,15,08	node62
+00,15,0c	node63
+00,15,10	node60-h8
+00,15,11	node61-h8
+00,15,12	node62-h8
+00,15,13	node63-h8
+00,15,1d	mod15-h8
+
+# Module 16
+00,16,00	node64
+00,16,04	node65
+00,16,08	node66
+00,16,0c	node67
+00,16,10	node64-h8
+00,16,11	node65-h8
+00,16,12	node66-h8
+00,16,13	node67-h8
+00,16,1d	mod16-h8
+
+# Module 17
+00,17,00	node68
+00,17,04	node69
+00,17,08	node70
+00,17,0c	node71
+00,17,10	node68-h8
+00,17,11	node69-h8
+00,17,12	node70-h8
+00,17,13	node71-h8
+00,17,1d	mod17-h8
+
+# Module 18
+00,18,00	node72
+00,18,04	node73
+00,18,08	node74
+00,18,0c	node75
+00,18,10	node72-h8
+00,18,11	node73-h8
+00,18,12	node74-h8
+00,18,13	node75-h8
+00,18,1d	mod18-h8
+
+# Module 19
+00,19,00	node76
+00,19,04	node77
+00,19,08	node78
+00,19,0c	node79
+00,19,10	node76-h8
+00,19,11	node77-h8
+00,19,12	node78-h8
+00,19,13	node79-h8
+00,19,1d	mod19-h8
+
+# Module 20
+00,20,00	node80
+00,20,04	node81
+00,20,08	node82
+00,20,0c	node83
+00,20,10	node80-h8
+00,20,11	node81-h8
+00,20,12	node82-h8
+00,20,13	node83-h8
+00,20,1d	mod20-h8
+
+# Module 21
+00,21,00	node84
+00,21,04	node85
+00,21,08	node86
+00,21,0c	node87
+00,21,10	node84-h8
+00,21,11	node85-h8
+00,21,12	node86-h8
+00,21,13	node87-h8
+00,21,1d	mod21-h8
+
+# Module 22
+00,22,00	node88
+00,22,04	node89
+00,22,08	node90
+00,22,0c	node91
+00,22,10	node88-h8
+00,22,11	node89-h8
+00,22,12	node90-h8
+00,22,13	node91-h8
+00,22,1d	mod22-h8
+
+# Module 23
+00,23,00	node92
+00,23,04	node93
+00,23,08	node94
+00,23,0c	node95
+00,23,10	node92-h8
+00,23,11	node93-h8
+00,23,12	node94-h8
+00,23,13	node95-h8
+00,23,1d	mod23-h8

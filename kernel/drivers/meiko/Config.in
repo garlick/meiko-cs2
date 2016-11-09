@@ -1,0 +1,3 @@
+tristate 'Support for Meiko CS/2 Bargraph' CONFIG_MEIKO_BARGRAPH
+tristate 'Support for Meiko CS/2 Control Area Network' CONFIG_MEIKO_CAN
+tristate 'Support for Meiko CS/2 Elan Communications Processor Reg Access' CONFIG_MEIKO_ELAN

@@ -1,0 +1,191 @@
+#
+# Meiko CAN equivalent of /etc/services
+#
+# $Id: canobj,v 1.2 2001/07/30 19:16:29 garlick Exp $
+# $Source: /slc/cvs/cs2/canobj,v $
+#
+000	BOARD_ID		# what type of board this is
+001	ROM_VERSION
+002	STATUS
+# 003 - 005 reserved for status
+010	LEDS
+011	RESET			# reset the node
+012	DEBUGLAMP
+013	H8SWATCHDOG
+014	WDRESETS
+015	TRACEOBJECT
+#
+020	CANSTATUS1
+021	CANSTATUS2
+022	CANSTATUS3
+#
+025	CANOVERRUN1
+026	CANOVERRUN2
+027	CANOVERRUN3
+#
+02A	CANHARDERROR1
+02B	CANHARDERROR2
+#
+030	WATCHDOG
+031	HEARTBEAT		# where to write heartbeats to
+032	DELTA
+038	CANHANDLER
+#
+03e	BOARDREV
+03f	MOD_STATUS
+#
+040	POWERSUPPLY
+041	POWERINHIBIT
+042	POWERDCGOOD
+043	POWERMARGIN
+#
+048	THERMMASTER
+049	THERMISTORS
+04a	FANSMASTER
+04b	FANS
+04c	GLOBALCLOCK
+04d	CLUSTERCLKMASTER
+#
+050	GCANROUTERCONTROLLER
+051	GCANROUTER
+052	GCANCURRENT
+#
+058	DISKSTATUS
+059	DISKPSUSTATUS
+05a	DISKPSUCONTROL
+#
+060	JTGAGOBJM
+061	JTAGOBJD1
+062	JTAGOBJD2
+#
+064	ELITEALLERRS
+065	ELITESPECERRS
+066	ELITELINKS
+068	ELITEERRS1
+069	ELITEERRS2
+06a	ELITEERRS3
+06b	ELITEERRS4
+06c	ELITEERRS5
+06d	ELITEERRS6
+06e	ELITEERRS7
+06f	ELITEERRS8
+#
+070	CAUTERIZE
+#
+071	ELITELINKSTATE
+072	ELITEOUTPUTBLOCKED
+#
+074	NVRAM			# NAK on WO/RO in OBP
+075	NVRAMSAVE		# NAK on WO/RO in OBP
+#
+076	IAM			# where to write our identity in mod contlr
+077	IAM_FACTOR		# IAM write is done every IAM_FACTOR heartbeats
+#
+078	REQTIMEOUT		# properties of retry mechanism
+079	REQRETRY
+#
+07d	SETDEFAULTS		# WO in OBP sets NVRAM to default values
+#
+080	ELANSTATS		# read only elan statistics
+081	EDCSTATS
+082	PFCNTL			# control power failure behavior
+#
+# Vrom objects.  During the Vrom reset countdown, it will accept
+# only a WO to CANOBJ_CHOOSE_VROM or CANOBJ_FLOW_SYNC0/1
+# This stops the other transactions from accidentally choosing Vrom
+#
+09b	CHOOSE_VROM
+#
+# Vrom sequenced packet protocol for fast, reliable downloading.
+#
+09c	FLOW_SYNC0
+09d	FLOW_SYNC1
+0a0	FLOW_PKT0
+0a1	FLOW_PKT1
+0a2	FLOW_PKT2
+0a3	FLOW_PKT3
+0a4	FLOW_PKT4
+0a5	FLOW_PKT5
+0a6	FLOW_PKT6
+0a7	FLOW_PKT7
+0a8	FLOW_PKT8
+0a9	FLOW_PKT9
+0aa	FLOW_PKT10
+0ab	FLOW_PKT11
+0ac	FLOW_PKT12
+0ad	FLOW_PKT13
+0ae	FLOW_PKT14
+0af	FLOW_PKT15
+0b0	FLOW_PKT16
+0b1	FLOW_PKT17
+0b2	FLOW_PKT18
+0b3	FLOW_PKT19
+0b4	FLOW_PKT20
+0b5	FLOW_PKT21
+0b6	FLOW_PKT22
+0b7	FLOW_PKT23
+0b8	FLOW_PKT24
+0b9	FLOW_PKT25
+0ba	FLOW_PKT26
+0bb	FLOW_PKT27
+0bc	FLOW_PKT28
+0bd	FLOW_PKT29
+0be	FLOW_PKT30
+0bf	FLOW_PKT31
+#
+3c0	ELAN_BOOT_ID
+3c1	EP_SMALL_MSG_SIZE
+3c2	EP_SMALL_MSG_BOXES
+3c3	EP_SMALL_MSG_BCAST_BOXES
+3c4	EP_BIG_MSG_SIZE
+3c5	EP_BIG_MSG_BOXES
+3c6	EP_BIG_MSG_BCAST_BOXES
+#
+3c7	EP_TX_TIMEOUT
+3c8	EP_TX_PKT_LIFETIME
+3c9	EP_BTX_TIMEOUT
+3ca	EP_BTX_PKT_LIFETIME
+#
+3d8	ETHERNETID		# RO
+3d9	HOSTID			# RO
+3da	SERIALNO
+3db	MEMSIZE			# RO
+3dc	NODENO
+3dd	MODULENO
+3de	CLUSTERNO
+#
+3e0	N_PROCS			# 3 == 2cpu's, 1 == 1
+3e1	PROC_TYPE
+3e2	MEMSIZE_2		# probably unused, same as 3db
+3e3	AUTOBOOT		# WO 0=false, 1=true  (OBP auto-boot?)
+3e4	BOOT			# WO (no data) causes boot
+3e5	REMOTE_TEST
+3e6	CACHE_SIZE
+#
+3ee	CS2_SERIAL_NUMBER
+#
+3ef	DROP_LINE		# write here to node with stream which was
+				#    connected to a console forceably
+				#    disconnects it 
+3f0	CONSOLE_CONNECT		# connect to the console
+3f1	CONSOLE_DISCONNECT	# disconnect the console
+3f2	RESET_IO		# WO 0=kbd/screen, 1=can, 2=ttya, 3=ttyb
+				#    |0x80 to make permanent 
+				#    (OBP input-device, output-device)
+3f3	BREAK			# push up a break (enter PROM)
+3f4	BOOT_DEV		# WO 1=elan, 2=disk, 3=net (OBP boot-device)
+3f5	BOOT_FILE		# WO 0="", 1=kadb, 2=-s, 3=kadb -s, 4=-r,
+				#    5=kadb -r, 6=-s -r, 7=kadb -s -r, ...
+				#    (OBP boot-file)
+3f6	SWITCH_TIMEOUT
+3f7	BCAST_TOP
+#
+3f8	ELAN_SW_PLANE
+3f9	ELAN_NUM_LEVELS
+3fa	ELAN_NODE_LEVEL
+3fb	ELAN_NODE_ID
+3fc	ELAN_IP_BC_LOW
+3fd	ELAN_IP_BC_HIGH
+3fe	ELAN_TOP_SWITCH
+#
+3ff	TESTRW			# canping

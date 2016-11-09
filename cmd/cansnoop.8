@@ -1,0 +1,40 @@
+.\" $Id: cansnoop.8,v 1.2 2001/07/27 10:24:55 garlick Exp $
+.\"
+.TH CANSNOOP 8 "14 May 1999"
+.SH NAME
+cansnoop \- watch traffic on the Meiko CS/2 CAN bus
+.SH SYNOPSIS
+.B cansnoop
+.RB [-p]
+.RB [-h]
+.SH DESCRIPTION
+.I cansnoop
+displays all packets received by the local CAN chip.  With the -p option,
+.I cansnoop
+instructs the device driver to enter promiscuous mode and receive all packets
+present on the LCAN.  With the -h option, heartbeat traffic is not displayed.
+.LP
+Output looks like this:
+.LP
+.nf
+0.000 011->004  RO  m1       HEARTBEAT     00 00 00 00 ....
+2.310 011->004  RO  m1       HEARTBEAT     00 00 00 00 ....
+4.610 011->004  RO  m1       HEARTBEAT     00 00 00 00 ....
+.fi
+.LP
+Column 1: the number of seconds elapsed since 
+.I cansnoop
+was started.
+.LP
+Column 2: source and destination LCAN address
+.LP
+Column 3: query type
+.LP
+Columns 4-5:  extended CAN address and object ID (extended can address is 
+mapped to a hostname if present in /etc/canhosts).
+.LP
+Columns 6-10 up to four bytes of data in hex and ASCI form.
+.SH AUTHORS
+Jim Garlick <garlick@llnl.gov>
+.SH SEE ALSO
+canctrl(8), cancon(8), canping(8), can(4)

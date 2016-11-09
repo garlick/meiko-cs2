@@ -1,0 +1,167 @@
+? foo.diff
+Index: include/asm/machines.h
+===================================================================
+RCS file: /chaos/cvs/silo/include/asm/machines.h,v
+retrieving revision 1.1.1.1
+retrieving revision 1.2
+diff -u -r1.1.1.1 -r1.2
+--- include/asm/machines.h	18 Jul 2000 18:58:34 -0000	1.1.1.1
++++ include/asm/machines.h	18 Jul 2000 19:10:51 -0000	1.2
+@@ -15,7 +15,7 @@
+ /* Current number of machines we know about that has an IDPROM
+  * machtype entry including one entry for the 0x80 OBP machines.
+  */
+-#define NUM_SUN_MACHINES   15
++#define NUM_SUN_MACHINES   16
+ 
+ extern struct Sun_Machine_Models Sun_Machines[NUM_SUN_MACHINES];
+ 
+@@ -42,6 +42,7 @@
+ #define SM_4_110      0x02    /* Sun 4/100 series */
+ #define SM_4_330      0x03    /* Sun 4/300 series */
+ #define SM_4_470      0x04    /* Sun 4/400 series */
++#define MEIKO_CS2     0x05    /* Meiko CS2 MK401/403 (dino1) processor board */
+ 
+ /* Sun4c machines                Full Name              - PROM NAME */
+ #define SM_4C_SS1     0x01    /* Sun4c SparcStation 1   - Sun 4/60  */
+Index: second/misc.c
+===================================================================
+RCS file: /chaos/cvs/silo/second/misc.c,v
+retrieving revision 1.1.1.1
+retrieving revision 1.2
+diff -u -r1.1.1.1 -r1.2
+--- second/misc.c	18 Jul 2000 18:58:35 -0000	1.1.1.1
++++ second/misc.c	18 Jul 2000 19:10:51 -0000	1.2
+@@ -334,6 +334,7 @@
+ { "Sun 4/200 Series", "sun4", sun4, (SM_SUN4 | SM_4_260) },
+ { "Sun 4/300 Series", "sun4", sun4, (SM_SUN4 | SM_4_330) },
+ { "Sun 4/400 Series", "sun4", sun4, (SM_SUN4 | SM_4_470) },
++{ "Meiko CS/2 dino1", "dino1", dino1, (SM_SUN4 | MEIKO_CS2) },
+ /* Now, Sun4c's */
+ { "SparcStation 1", 	"SUNW,Sun_4_60", sun4c, (SM_SUN4C | SM_4C_SS1) },
+ { "SparcStation IPC", 	"SUNW,Sun_4_40", sun4c, (SM_SUN4C | SM_4C_IPC) },
+@@ -415,6 +416,7 @@
+                     case sun4e: q = "SUN4E"; break;
+                     case sun4p: q = "SUN4P"; break;
+                     case sun4u: q = "SUN4U"; break;
++                    case dino1: q = "DINO1"; break;
+                     default: break;
+                 }
+                 printf ("%s", q);
+Index: second/promlib.h
+===================================================================
+RCS file: /chaos/cvs/silo/second/promlib.h,v
+retrieving revision 1.1.1.1
+retrieving revision 1.2
+diff -u -r1.1.1.1 -r1.2
+--- second/promlib.h	18 Jul 2000 18:58:36 -0000	1.1.1.1
++++ second/promlib.h	18 Jul 2000 19:10:51 -0000	1.2
+@@ -9,7 +9,7 @@
+  * Krups has no architecture in the PROM tree.
+  * CP-1200 has "sun4s" which is obviously a mistake [don't ask, huh].
+  */
+-enum arch { sun4, sun4c, sun4m, sun4d, sun4e, sun4u, sun4p, sununknown };
++enum arch { sun4, sun4c, sun4m, sun4d, sun4e, sun4u, sun4p, dino1, sununknown };
+ 
+ extern struct linux_romvec *romvec;
+ 
+Index: second/timer.c
+===================================================================
+RCS file: /chaos/cvs/silo/second/timer.c,v
+retrieving revision 1.1.1.1
+retrieving revision 1.2
+diff -u -r1.1.1.1 -r1.2
+--- second/timer.c	18 Jul 2000 18:58:36 -0000	1.1.1.1
++++ second/timer.c	18 Jul 2000 19:10:51 -0000	1.2
+@@ -35,8 +35,25 @@
+ 	volatile unsigned int limit14;
+ };
+ 
++struct dino1_timer_regs {
++	volatile unsigned char  pad0[3];
++	volatile unsigned char  limit10; /* 0 - shared (only cpu 0's is used) */
++	volatile unsigned char  pad1[3];
++	volatile unsigned char  limit14; /* 1 - per-cpu */
++	volatile unsigned int   pad2;    /* 2 - unused */
++	volatile unsigned char  pad3[3];
++	volatile unsigned char  control; /* control register */
++};
++
++#define DINO1_TIMER_10_SELECT           0x0
++#define DINO1_TIMER_MODE_RATE           (2<<1)
++#define DINO1_TIMER_RW_SHORT            (3<<4)
++#define DINO1_TIMER_READ_SELECT         0xc0
++#define DINO1_TIMER_READ_10             (1<<1)
++
+ static volatile struct sun4m_timer_regs *sun4m_timer;
+ static volatile struct sun4c_timer_info *sun4c_timer;
++static volatile struct dino1_timer_regs *dino1_timer;
+ static unsigned char *addr_to_free = 0;
+ static int len_to_free;
+ static unsigned long long sun4u_tickcmpr;
+@@ -58,6 +75,39 @@
+     return ((n>>24)&0xFF) | ((n>>8)&0xFF00) | ((n&0xFF)<<24) | ((n&0xFF00)<<8);
+ }
+ 
++static inline int dino1_init_timer ()
++{
++    int reg_count;
++    struct linux_prom_registers cnt_regs[PROMREG_MAX];
++    int obio_node, cnt_node;
++ 
++    cnt_node = 0;
++    if ((obio_node = prom_searchsiblings (prom_getchild (prom_root_node), "obio")) == 0 ||
++        (obio_node = prom_getchild (obio_node)) == 0 ||
++        (cnt_node = prom_searchsiblings (obio_node, "counter")) == 0) {
++        return -1;
++    }
++    reg_count = prom_getproperty (cnt_node, "reg",
++                                  (void *) cnt_regs, sizeof (cnt_regs));
++    reg_count = (reg_count / sizeof (struct linux_prom_registers));
++ 
++    prom_apply_obio_ranges (cnt_regs, reg_count);
++
++    /* setting vm hint to TICKER_VIRTUAL causes it to fail, but zero works */
++    dino1_timer = (struct dino1_timer_regs *)(*romvec->pv_v2devops.v2_dumb_mmap)((char *)0, cnt_regs[reg_count-1].which_io, (unsigned)cnt_regs[reg_count-1].phys_addr, cnt_regs[reg_count-1].reg_size);
++    if (!dino1_timer) return -1;
++
++    dino1_timer->control = 
++      DINO1_TIMER_RW_SHORT | DINO1_TIMER_10_SELECT | DINO1_TIMER_MODE_RATE;
++    dino1_timer->limit10 = 0xff; /* LSB */
++    dino1_timer->limit10 = 0xff; /* MSB */
++
++    addr_to_free = (unsigned char *)dino1_timer;
++    len_to_free = cnt_regs[reg_count-1].reg_size;
++    return 0;
++}
++
++
+ static inline int sun4d_init_timer ()
+ {
+     int node = prom_getchild(prom_searchsiblings(prom_getchild(prom_searchsiblings(prom_getchild(prom_root_node), "cpu-unit")), "bootbus"));
+@@ -194,6 +244,7 @@
+         case sun4d: retval = sun4d_init_timer (); break;
+         case sun4p: retval = sun4p_init_timer (); break;
+         case sun4u: retval = sun4u_init_timer (); break;
++        case dino1: retval = dino1_init_timer (); break;
+         default: retval = -1; break;
+     }  
+     if (retval < 0) {
+@@ -271,6 +322,17 @@
+         case sun4p: i = sun4p_lda(PCIC_PHYSADDR+PCIC_SYS_COUNT);
+                     i >>= 2;  /* PROLL does this and its timing is sure right */
+                     break;
++	case dino1: dino1_timer->control = DINO1_TIMER_READ_SELECT
++			| DINO1_TIMER_READ_10 | DINO1_TIMER_RW_SHORT;
++		    i =  dino1_timer->limit10;          /* LSB */
++		    i |= dino1_timer->limit10 << 8;     /* MSB */
++		    if (i <= lasti)
++			ticks += lasti - i;
++		    else
++			ticks += 0xffff - i + lasti;
++       		    lasti = i;
++		    /* tick period is 3.2uS */
++		    return ticks / 5000; /* fudged from calc value of 3125 */
+         case sun4d: /* I cannot get the normal sun4d timer working
+ 		       during bootstrapping, so unfortunately I can give
+ 		       just a 1000ms precision. */

@@ -1,0 +1,32 @@
+.\" $Id: canctrl.8,v 1.2 2001/07/27 10:24:55 garlick Exp $
+.\"
+.TH CANCTRL 8 "14 May 1999"
+.SH NAME
+canctrl \- query Meiko CS/2 CAN bus objects
+.SH SYNOPSIS
+.B canctrl
+.RB type 
+.RB obj 
+.RB hostname 
+.RB [hex data]
+.SH DESCRIPTION
+.I canctrl
+permits the sending a single CAN packets of arbitrary composition and 
+the receipt of a single ACK/NAK response.
+.LP
+Type should be one of the Meiko CAN types:  RO (read object), 
+WO (write object), WNA (write object, no ACK), DAT (data), SIG (signal),
+ACK (acknowledge), or NAK (not acknowledged)
+.LP
+Object can be either one of the compiled-in object names or a hex value
+preceded with "0x".  Compiled-in values are currently "ethernetid", "hostid",
+"memsize", "iam", "heartbeat", "nodeno", "moduleno", "clusterno", or "reset".
+.LP
+The target hostname is mapped to a CAN address via the /etc/canhosts file.
+.LP
+The optional data should be a hex value preceded with "0x", which will be
+packetized as a 4-byte unsigned long.
+.SH AUTHORS
+Jim Garlick <garlick@llnl.gov>
+.SH SEE ALSO
+cancon(8), canping(8), cansnoop(8), can(4)

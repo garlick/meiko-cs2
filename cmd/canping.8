@@ -1,0 +1,36 @@
+.\" $Id: canping.8,v 1.3 2001/07/27 14:13:18 garlick Exp $
+.\"
+.TH CANPING 8 "14 May 1999"
+.SH NAME
+canping \- measure round trip time on Meiko CS/2 CAN bus
+.SH SYNOPSIS
+.B canping 
+.RB [-f] 
+.RB [-c count] 
+.RB hostname
+.SH DESCRIPTION
+.I canping
+sends a "write object" query to the specified host's TESTRW object
+once per second and measures the time in milliseconds to send the query and
+receive an ACK or NAK.
+.LP
+Like the ICMP ping program, canping continues to send packets until the user
+aborts with a SIGINT (ctrl-C).
+.LP
+.I -f 
+skips the one second sleep between pings.
+.LP
+.I -c
+specifes a number of pings to run before exiting.
+.LP
+The TESTRW object should be responsive either when the node is booted
+in Linux, Solaris, or OpenBoot PROM.  The CAN will not respond if the 
+PROM is reinitializing itself, or when SILO, the Linux Loader, is running.
+Response time on the LCAN is typically around one millisecond when the target 
+is in OBP mode; less when the target has booted to Linux.
+.LP
+hostnames are mapped to CAN addresses via the /etc/canhosts file.
+.SH AUTHORS
+Jim Garlick <garlick@llnl.gov>
+.SH SEE ALSO
+canctrl(8), cancon(8), cansnoop(8), can(4)

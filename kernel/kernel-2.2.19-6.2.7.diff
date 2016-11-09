@@ -1,0 +1,626 @@
+Index: arch/sparc/Makefile
+===================================================================
+RCS file: /chaos/cvs/mlinux/arch/sparc/Makefile,v
+retrieving revision 1.1.1.1
+retrieving revision 1.3
+diff -u -r1.1.1.1 -r1.3
+--- arch/sparc/Makefile	11 Jul 2001 22:31:15 -0000	1.1.1.1
++++ arch/sparc/Makefile	12 Jul 2001 16:55:13 -0000	1.3
+@@ -44,6 +44,12 @@
+ LIBS := $(TOPDIR)/lib/lib.a $(LIBS) $(TOPDIR)/arch/sparc/prom/promlib.a \
+ 	$(TOPDIR)/arch/sparc/lib/lib.a
+ 
++ifdef CONFIG_MEIKO_CS2
++SUBDIRS := $(SUBDIRS) arch/sparc/meiko
++CORE_FILES := arch/sparc/meiko/meikolib.o $(CORE_FILES) 
++DRIVERS := $(DRIVERS) drivers/meiko/meiko.a
++endif
++
+ ifdef CONFIG_AP1000
+ SUBDIRS := $(SUBDIRS) arch/sparc/ap1000 mpp
+ CORE_FILES := $(TOPDIR)/arch/sparc/ap1000/ap1000lib.o \
+Index: arch/sparc/config.in
+===================================================================
+RCS file: /chaos/cvs/mlinux/arch/sparc/config.in,v
+retrieving revision 1.1.1.1
+retrieving revision 1.3
+diff -u -r1.1.1.1 -r1.3
+--- arch/sparc/config.in	11 Jul 2001 22:31:15 -0000	1.1.1.1
++++ arch/sparc/config.in	14 Jul 2001 11:23:26 -0000	1.3
+@@ -44,6 +44,13 @@
+ 	fi
+ 
+ 	mainmenu_option next_comment
++	comment 'Meiko CS/2 Support'
++	bool 'Support for Meiko CS/2 multicomputer' CONFIG_MEIKO_CS2
++	if [ "$CONFIG_MEIKO_CS2" = "y" ]; then
++		source drivers/meiko/Config.in
++	fi
++	
++	mainmenu_option next_comment
+ 	comment 'Console drivers'
+ 	bool 'PROM console' CONFIG_PROM_CONSOLE
+ 	bool 'Support Frame buffer devices' CONFIG_FB
+Index: arch/sparc/kernel/head.S
+===================================================================
+RCS file: /chaos/cvs/mlinux/arch/sparc/kernel/head.S,v
+retrieving revision 1.1.1.1
+retrieving revision 1.2
+diff -u -r1.1.1.1 -r1.2
+--- arch/sparc/kernel/head.S	11 Jul 2001 22:31:15 -0000	1.1.1.1
++++ arch/sparc/kernel/head.S	11 Jul 2001 22:41:08 -0000	1.2
+@@ -861,6 +861,10 @@
+ 		be	1f
+ 		 cmp	%l1, 'm'
+ 		be	1f
++#ifdef CONFIG_MEIKO_CS2
++		 cmp	%l1, '1'		! dino1
++		be	1f
++#endif
+ 		 cmp	%l1, 'd'
+ 		be	1f
+ 		 cmp	%l1, 'e'
+@@ -873,6 +877,10 @@
+ 		ldub	[%l1 + 0x4], %l1
+ 		cmp	%l1, 'm'		! Test for sun4d, sun4e ?
+ 		be	sun4m_init
++#ifdef CONFIG_MEIKO_CS2
++		 cmp	%l1, '1'		! dino1
++		be	sun4m_init
++#endif
+ 		 cmp	%l1, 'd'		! Let us see how the beast will die
+ 		be	sun4d_init
+ 		 nop
+Index: arch/sparc/kernel/idprom.c
+===================================================================
+RCS file: /chaos/cvs/mlinux/arch/sparc/kernel/idprom.c,v
+retrieving revision 1.1.1.1
+retrieving revision 1.2
+diff -u -r1.1.1.1 -r1.2
+--- arch/sparc/kernel/idprom.c	11 Jul 2001 22:31:15 -0000	1.1.1.1
++++ arch/sparc/kernel/idprom.c	11 Jul 2001 22:41:08 -0000	1.2
+@@ -31,6 +31,9 @@
+ { "Sun 4/200 Series", (SM_SUN4 | SM_4_260) },
+ { "Sun 4/300 Series", (SM_SUN4 | SM_4_330) },
+ { "Sun 4/400 Series", (SM_SUN4 | SM_4_470) },
++#ifdef CONFIG_MEIKO_CS2
++{ "Meiko CS-2 dino1", (SM_SUN4 | MEIKO_CS2) },
++#endif
+ /* Now, Sun4c's */
+ { "Sun4c SparcStation 1", (SM_SUN4C | SM_4C_SS1) },
+ { "Sun4c SparcStation IPC", (SM_SUN4C | SM_4C_IPC) },
+@@ -86,6 +89,13 @@
+ 
+ 	idprom = &idprom_buffer;
+ 
++#ifdef CONFIG_MEIKO_CS2
++	/* 
++	 * Meiko IDPROM's are version 0x02 and checksums as computed below
++	 * always fail.
++	 */
++	if (idprom->id_format != 0x02) {
++#endif
+ 	if (idprom->id_format != 0x01)  {
+ 		prom_printf("IDPROM: Unknown format type!\n");
+ 		prom_halt();
+@@ -96,7 +106,9 @@
+ 			    idprom->id_cksum, calc_idprom_cksum(idprom));
+ 		prom_halt();
+ 	}
+-
++#ifdef CONFIG_MEIKO_CS2
++	}
++#endif
+ 	display_system_type(idprom->id_machtype);
+ 
+ 	printk("Ethernet address: %x:%x:%x:%x:%x:%x\n",
+Index: arch/sparc/kernel/irq.c
+===================================================================
+RCS file: /chaos/cvs/mlinux/arch/sparc/kernel/irq.c,v
+retrieving revision 1.1.1.1
+retrieving revision 1.2
+diff -u -r1.1.1.1 -r1.2
+--- arch/sparc/kernel/irq.c	11 Jul 2001 22:31:15 -0000	1.1.1.1
++++ arch/sparc/kernel/irq.c	11 Jul 2001 22:41:08 -0000	1.2
+@@ -718,6 +718,9 @@
+ 	extern void sun4c_init_IRQ( void );
+ 	extern void sun4m_init_IRQ( void );
+ 	extern void sun4d_init_IRQ( void );
++#ifdef CONFIG_MEIKO_CS2
++	extern void dino1_init_IRQ( void );
++#endif
+     
+ 	switch(sparc_cpu_model) {
+ 	case sun4c:
+@@ -735,7 +738,11 @@
+ #endif
+ 		sun4m_init_IRQ();
+ 		break;
+-		
++#ifdef CONFIG_MEIKO_CS2
++	case dino1:
++		dino1_init_IRQ();
++		break;
++#endif		
+ 	case sun4d:
+ 		sun4d_init_IRQ();
+ 		break;
+Index: arch/sparc/kernel/setup.c
+===================================================================
+RCS file: /chaos/cvs/mlinux/arch/sparc/kernel/setup.c,v
+retrieving revision 1.1.1.1
+retrieving revision 1.2
+diff -u -r1.1.1.1 -r1.2
+--- arch/sparc/kernel/setup.c	11 Jul 2001 22:31:15 -0000	1.1.1.1
++++ arch/sparc/kernel/setup.c	11 Jul 2001 22:41:08 -0000	1.2
+@@ -166,6 +166,11 @@
+ 		prom_printf("boot_flags_init: Halt!\n");
+ 		halt();
+ 		break;
++#ifdef CONFIG_MEIKO_CS2
++	case dino1:
++		printk("DINO1\n");
++		break;
++#endif
+ 	default:
+ 		printk("Unknown boot switch (-%c)\n", c);
+ 		break;
+@@ -316,7 +321,9 @@
+ 	if(!strcmp(&cputypval,"sun4d")) { sparc_cpu_model=sun4d; }
+ 	if(!strcmp(&cputypval,"sun4e")) { sparc_cpu_model=sun4e; }
+ 	if(!strcmp(&cputypval,"sun4u")) { sparc_cpu_model=sun4u; }
+-
++#ifdef CONFIG_MEIKO_CS2
++	if(!strcmp(&cputypval,"dino1")) { sparc_cpu_model=dino1; }
++#endif
+ #ifdef CONFIG_SUN4
+ 	if (sparc_cpu_model != sun4) {
+ 		prom_printf("This kernel is for Sun4 architecture only.\n");
+@@ -358,6 +365,11 @@
+ 		printk("AP1000\n");
+ 		packed = 1;
+ 		break;
++#ifdef CONFIG_MEIKO_CS2
++	case dino1:
++		printk("DINO1\n");
++		break;
++#endif
+ 	default:
+ 		printk("UNKNOWN!\n");
+ 		break;
+@@ -456,6 +468,11 @@
+ 				} else if (idev == PROMDEV_I_UNK && odev == PROMDEV_OSCREEN) {
+ 					serial_console = 0;
+ 					prom_printf("MrCoffee keyboard\n");
++				} else if (idev == 0x3 && odev == 0x3) {
++#ifdef CONFIG_MEIKO_CS2
++					conswitchp = NULL;
++#endif
++					prom_printf("CAN console\n");
+ 				} else {
+ 					prom_printf("Inconsistent or unknown console\n");
+ 					prom_halt();
+@@ -495,7 +512,7 @@
+ 	init_task.mm->context = (unsigned long) NO_CONTEXT;
+ 	init_task.tss.kregs = &fake_swapper_regs;
+ 
+-	if (serial_console)
++	if (serial_console) 
+ 		conswitchp = NULL;
+ }
+ 
+Index: arch/sparc/kernel/smp.c
+===================================================================
+RCS file: /chaos/cvs/mlinux/arch/sparc/kernel/smp.c,v
+retrieving revision 1.1.1.1
+retrieving revision 1.2
+diff -u -r1.1.1.1 -r1.2
+--- arch/sparc/kernel/smp.c	11 Jul 2001 22:31:16 -0000	1.1.1.1
++++ arch/sparc/kernel/smp.c	11 Jul 2001 22:41:08 -0000	1.2
+@@ -135,7 +135,11 @@
+ 	extern void smp4m_boot_cpus(void);
+ 	extern void smp4d_boot_cpus(void);
+ 	
+-	if (sparc_cpu_model == sun4m)
++	if (sparc_cpu_model == sun4m 
++#ifdef CONFIG_MEIKO_CS2
++	    || sparc_cpu_model == dino1
++#endif
++	    )
+ 		smp4m_boot_cpus();
+ 	else
+ 		smp4d_boot_cpus();
+Index: arch/sparc/kernel/time.c
+===================================================================
+RCS file: /chaos/cvs/mlinux/arch/sparc/kernel/time.c,v
+retrieving revision 1.1.1.1
+diff -u -r1.1.1.1 time.c
+--- arch/sparc/kernel/time.c	11 Jul 2001 22:31:15 -0000	1.1.1.1
++++ arch/sparc/kernel/time.c	30 Sep 2003 23:04:17 -0000
+@@ -38,6 +38,9 @@
+ #include <asm/machines.h>
+ #include <asm/sun4paddr.h>
+ #include <asm/page.h>
++#ifdef CONFIG_MEIKO_CS2
++#include <asm/meiko/timer.h>
++#endif
+ 
+ extern rwlock_t xtime_lock;
+ 
+@@ -94,6 +97,11 @@
+ 	write_lock(&xtime_lock);
+ 
+ 	do_timer(regs);
++#ifdef CONFIG_MEIKO_CS2
++	/* expects xtime_lock to be held */
++	if (sparc_cpu_model == dino1)
++		dino1_timer_intr();
++#endif
+ 
+ 	/* Determine when to update the Mostek clock. */
+ 	if ((time_status & STA_UNSYNC) == 0 &&
+@@ -264,6 +272,9 @@
+ 	switch (sparc_cpu_model) {
+ 	case sun4c:
+ 		break;
++#ifdef CONFIG_MEIKO_CS2
++	case dino1:
++#endif
+ 	case sun4m:
+ 		node = prom_getchild(prom_searchsiblings(node, "obio"));
+ 		break;
+@@ -433,6 +444,11 @@
+ 	unsigned long offset = 0;
+ 	unsigned int count;
+ 
++#ifdef CONFIG_MEIKO_CS2
++	/* currently a noop on the meiko */
++	if (sparc_cpu_model == dino1)
++		return dino1_gettimeoffset();
++#endif
+ 	count = (*master_l10_counter >> 10) & 0x1fffff;
+ 
+ 	if(test_bit(TIMER_BH, &bh_active))
+@@ -454,6 +470,12 @@
+ 	*tv = xtime;
+ 	restore_flags(flags);
+ #else /* !(CONFIG_AP1000) */
++#ifdef CONFIG_MEIKO_CS2
++	if (sparc_cpu_model == dino1) {
++		dino1_gettimeofday(tv);
++		return;	
++	}
++#endif
+ 	/* Load doubles must be used on xtime so that what we get
+ 	 * is guarenteed to be atomic, this is why we can run this
+ 	 * with interrupts on full blast.  Don't touch this... -DaveM
+Index: arch/sparc/mm/init.c
+===================================================================
+RCS file: /chaos/cvs/mlinux/arch/sparc/mm/init.c,v
+retrieving revision 1.1.1.1
+retrieving revision 1.2
+diff -u -r1.1.1.1 -r1.2
+--- arch/sparc/mm/init.c	11 Jul 2001 22:31:16 -0000	1.1.1.1
++++ arch/sparc/mm/init.c	11 Jul 2001 22:41:08 -0000	1.2
+@@ -104,7 +104,11 @@
+ 	printk("%d pages shared\n",shared);
+ 	printk("%d pages swap cached\n",cached);
+ 	printk("%ld page tables cached\n",pgtable_cache_size);
+-	if (sparc_cpu_model == sun4m || sparc_cpu_model == sun4d)
++	if (sparc_cpu_model == sun4m 
++#ifdef CONFIG_MEIKO_CS2
++	    || sparc_cpu_model == dino1
++#endif
++	    || sparc_cpu_model == sun4d)
+ 		printk("%ld page dirs cached\n", pgd_cache_size);
+ 	show_buffers();
+ #ifdef CONFIG_NET
+@@ -155,6 +159,9 @@
+ 		BTFIXUPSET_SETHI(sparc_unmapped_base, 0xe0000000);
+ 		break;
+ 	case sun4m:
++#ifdef CONFIG_MEIKO_CS2
++	case dino1:
++#endif
+ 	case sun4d:
+ 		start_mem = srmmu_paging_init(start_mem, end_mem);
+ 		sparc_unmapped_base = 0x50000000;
+@@ -224,7 +231,11 @@
+ 			}
+ 		}
+ 	} else {
+-		if((sparc_cpu_model == sun4m) || (sparc_cpu_model == sun4d)) {
++		if(sparc_cpu_model == sun4m
++#ifdef CONFIG_MEIKO_CS2
++		    || sparc_cpu_model == dino1
++#endif
++		    || sparc_cpu_model == sun4d) {
+ 			srmmu_frob_mem_map(start_mem);
+ 		} else {
+ 			for(addr = start_mem; addr < end_mem; addr += PAGE_SIZE) {
+Index: arch/sparc/mm/loadmmu.c
+===================================================================
+RCS file: /chaos/cvs/mlinux/arch/sparc/mm/loadmmu.c,v
+retrieving revision 1.1.1.1
+retrieving revision 1.2
+diff -u -r1.1.1.1 -r1.2
+--- arch/sparc/mm/loadmmu.c	11 Jul 2001 22:31:16 -0000	1.1.1.1
++++ arch/sparc/mm/loadmmu.c	11 Jul 2001 22:41:08 -0000	1.2
+@@ -39,6 +39,9 @@
+ 		ld_mmu_sun4c();
+ 		break;
+ 	case sun4m:
++#ifdef CONFIG_MEIKO_CS2
++	case dino1:
++#endif
+ 	case sun4d:
+ 		ld_mmu_srmmu();
+ 		break;
+Index: arch/sparc/mm/srmmu.c
+===================================================================
+RCS file: /chaos/cvs/mlinux/arch/sparc/mm/srmmu.c,v
+retrieving revision 1.1.1.1
+retrieving revision 1.3
+diff -u -r1.1.1.1 -r1.3
+--- arch/sparc/mm/srmmu.c	11 Jul 2001 22:31:16 -0000	1.1.1.1
++++ arch/sparc/mm/srmmu.c	12 Jul 2001 06:30:55 -0000	1.3
+@@ -53,6 +53,8 @@
+ int vac_line_size;
+ int vac_badbits;
+ 
++extern void ld_mmu_iommu40(void);
++
+ extern unsigned long sparc_iobase_vaddr;
+ 
+ #ifdef __SMP__
+@@ -3086,6 +3088,10 @@
+ #endif
+ 	if (sparc_cpu_model == sun4d)
+ 		ld_mmu_iounit();
++#ifdef CONFIG_MEIKO_CS2
++	else if (sparc_cpu_model == dino1)
++		ld_mmu_iommu40();
++#endif
+ 	else
+ 		ld_mmu_iommu();
+ #ifdef __SMP__
+Index: configs/kernel-2.2.19-sparc.config
+===================================================================
+RCS file: /chaos/cvs/mlinux/configs/kernel-2.2.19-sparc.config,v
+retrieving revision 1.1.1.1
+retrieving revision 1.3
+diff -u -r1.1.1.1 -r1.3
+Index: drivers/Makefile
+===================================================================
+RCS file: /chaos/cvs/mlinux/drivers/Makefile,v
+retrieving revision 1.1.1.1
+retrieving revision 1.3
+diff -u -r1.1.1.1 -r1.3
+--- drivers/Makefile	11 Jul 2001 22:30:06 -0000	1.1.1.1
++++ drivers/Makefile	12 Jul 2001 16:55:15 -0000	1.3
+@@ -12,6 +12,11 @@
+ ALL_SUB_DIRS := $(SUB_DIRS) pci sgi scsi sbus cdrom isdn pnp \
+ 				macintosh video dio zorro fc4 nubus usb telephony i2o i2c sensors
+ 
++ifdef CONFIG_MEIKO_CS2
++SUB_DIRS += meiko
++MOD_SUB_DIRS += meiko
++endif
++
+ ifdef CONFIG_DIO
+ SUB_DIRS += dio
+ MOD_SUB_DIRS += dio
+Index: drivers/char/misc.c
+===================================================================
+RCS file: /chaos/cvs/mlinux/drivers/char/misc.c,v
+retrieving revision 1.1.1.1
+retrieving revision 1.3
+diff -u -r1.1.1.1 -r1.3
+--- drivers/char/misc.c	11 Jul 2001 22:30:24 -0000	1.1.1.1
++++ drivers/char/misc.c	14 Jul 2001 11:23:28 -0000	1.3
+@@ -59,6 +59,11 @@
+ #define DYNAMIC_MINORS 64 /* like dynamic majors */
+ static unsigned char misc_minors[DYNAMIC_MINORS / 8];
+ 
++#ifdef CONFIG_MEIKO_CS2
++extern int can_init(void);
++extern int bg_init(void);
++extern int elan_init(void);
++#endif
+ extern int bus_mouse_init(void);
+ extern int qpmouse_init(void);
+ extern int ms_bus_mouse_init(void);
+@@ -280,6 +285,15 @@
+ #endif
+ #ifdef CONFIG_PMAC_PBOOK
+ 	pmu_device_init();
++#endif
++#ifdef CONFIG_MEIKO_ELAN
++	elan_init();
++#endif
++#ifdef CONFIG_MEIKO_BARGRAPH
++	bg_init();
++#endif
++#ifdef CONFIG_MEIKO_CAN
++	can_init();
+ #endif
+ #ifdef CONFIG_SGI_NEWPORT_GFX
+ 	gfx_register ();
+Index: drivers/net/sunlance.c
+===================================================================
+RCS file: /chaos/cvs/mlinux/drivers/net/sunlance.c,v
+retrieving revision 1.1.1.1
+retrieving revision 1.2
+diff -u -r1.1.1.1 -r1.2
+--- drivers/net/sunlance.c	11 Jul 2001 22:30:09 -0000	1.1.1.1
++++ drivers/net/sunlance.c	11 Jul 2001 22:41:09 -0000	1.2
+@@ -1216,6 +1216,31 @@
+ 					return v;
+ 				continue;
+ 			}
++#ifdef CONFIG_MEIKO_CS2
++			/*
++			 * Meiko MK401 LANCE is:
++			 *  /iommu@f,f4ffffe0/sbus@f,0/dma@4,400000/le@4,c00000
++			 */
++			if (strcmp(sdev->prom_name, "dma") == 0) {
++				struct linux_sbus_device *s = sdev->child;
++
++				while (s) {
++					if (strcmp(s->prom_name, "le") == 0){
++						prom_printf("Meiko dino1 builtin LANCE ignored:  no support yet\n");
++#if 0
++						/* untested, but ought to work*/
++						cards++;
++						ledma = find_ledma(sdev);
++						if ((v = sparc_lance_init(
++						    dev, s, ledma, 0)))
++							return v;
++#endif
++					}
++					s = s->next;
++				}
++				continue;
++			}
++#endif
+ 		} /* for each sbusdev */
+ 	} /* for each sbus */
+ 	if (!cards)
+Index: drivers/sbus/sbus.c
+===================================================================
+RCS file: /chaos/cvs/mlinux/drivers/sbus/sbus.c,v
+retrieving revision 1.1.1.1
+retrieving revision 1.2
+diff -u -r1.1.1.1 -r1.2
+--- drivers/sbus/sbus.c	11 Jul 2001 22:30:57 -0000	1.1.1.1
++++ drivers/sbus/sbus.c	11 Jul 2001 22:41:09 -0000	1.2
+@@ -196,6 +196,7 @@
+  */
+ 
+ extern void iommu_init(int iommu_node, struct linux_sbus *sbus);
++extern void iommu40_init(int iommu_node, struct linux_sbus *sbus);
+ extern void iounit_init(int sbi_node, int iounit_node, struct linux_sbus *sbus);
+ void sun4_init(void);
+ #ifdef CONFIG_SUN_OPENPROMIO
+@@ -307,8 +308,12 @@
+ 	sbus->prom_node = nd;
+ 	this_sbus=nd;
+ 
+-	if(iommund && sparc_cpu_model != sun4u && sparc_cpu_model != sun4d)
+-		iommu_init(iommund, sbus);
++	if(iommund) {
++		if (sparc_cpu_model == dino1)
++			iommu40_init(iommund, sbus);
++		else if (sparc_cpu_model != sun4u && sparc_cpu_model != sun4d)
++			iommu_init(iommund, sbus);
++	}
+ 
+ 	/* Loop until we find no more SBUS's */
+ 	while(this_sbus) {
+Index: drivers/sbus/char/zs.c
+===================================================================
+RCS file: /chaos/cvs/mlinux/drivers/sbus/char/zs.c,v
+retrieving revision 1.1.1.1
+retrieving revision 1.3
+diff -u -r1.1.1.1 -r1.3
+--- drivers/sbus/char/zs.c	11 Jul 2001 22:30:57 -0000	1.1.1.1
++++ drivers/sbus/char/zs.c	14 Jul 2001 11:23:31 -0000	1.3
+@@ -40,6 +40,7 @@
+ #ifdef CONFIG_PCI
+ #include <linux/pci.h>
+ #endif
++#include <asm/pgtable.h>
+ 
+ #include "sunserial.h"
+ #include "zs.h"
+@@ -59,8 +60,13 @@
+  * completion.
+  */
+ #ifndef __sparc_v9__
++#ifdef CONFIG_MEIKO_CS2
++#define ZSDELAY()		do { flush_cache_all(); udelay(5); } while (0)
++#define ZSDELAY_LONG()		do { flush_cache_all(); udelay(20); } while (0)
++#else
+ #define ZSDELAY()		udelay(5)
+ #define ZSDELAY_LONG()		udelay(20)
++#endif
+ #define ZS_WSYNC(channel)	do { } while(0)
+ #else
+ #define ZSDELAY()
+Index: include/asm-sparc/io.h
+===================================================================
+RCS file: /chaos/cvs/mlinux/include/asm-sparc/io.h,v
+retrieving revision 1.1.1.1
+diff -u -r1.1.1.1 io.h
+--- include/asm-sparc/io.h	11 Jul 2001 22:29:50 -0000	1.1.1.1
++++ include/asm-sparc/io.h	30 Sep 2003 23:04:28 -0000
+@@ -111,6 +111,9 @@
+ 	case sun4:
+ 		sun4c_mapioaddr(physaddr, virt_addr, bus, rdonly);
+ 		break;
++#ifdef CONFIG_MEIKO_CS2
++	case dino1:
++#endif
+ 	case sun4m:
+ 	case sun4d:
+ 	case sun4e:
+@@ -135,6 +138,9 @@
+ 	case sun4:
+ 		sun4c_unmapioaddr(virt_addr);
+ 		break;
++#ifdef CONFIG_MEIKO_CS2
++	case dino1:
++#endif
+ 	case sun4m:
+ 	case sun4d:
+ 	case sun4e:
+Index: include/asm-sparc/machines.h
+===================================================================
+RCS file: /chaos/cvs/mlinux/include/asm-sparc/machines.h,v
+retrieving revision 1.1.1.1
+retrieving revision 1.2
+diff -u -r1.1.1.1 -r1.2
+--- include/asm-sparc/machines.h	11 Jul 2001 22:29:50 -0000	1.1.1.1
++++ include/asm-sparc/machines.h	11 Jul 2001 22:41:10 -0000	1.2
+@@ -42,6 +42,7 @@
+ #define SM_4_110      0x02    /* Sun 4/100 series */
+ #define SM_4_330      0x03    /* Sun 4/300 series */
+ #define SM_4_470      0x04    /* Sun 4/400 series */
++#define MEIKO_CS2     0x05    /* Meiko CS/2 dino1 node */
+ 
+ /* Sun4c machines                Full Name              - PROM NAME */
+ #define SM_4C_SS1     0x01    /* Sun4c SparcStation 1   - Sun 4/60  */
+Index: include/asm-sparc/system.h
+===================================================================
+RCS file: /chaos/cvs/mlinux/include/asm-sparc/system.h,v
+retrieving revision 1.1.1.1
+diff -u -r1.1.1.1 system.h
+--- include/asm-sparc/system.h	11 Jul 2001 22:29:50 -0000	1.1.1.1
++++ include/asm-sparc/system.h	30 Sep 2003 23:04:28 -0000
+@@ -33,6 +33,9 @@
+   sun4u       = 0x05, /* V8 ploos ploos */
+   sun_unknown = 0x06,
+   ap1000      = 0x07, /* almost a sun4m */
++#ifdef CONFIG_MEIKO_CS2
++  dino1	      = 0x08, /* also almost a sun4m */
++#endif
+ };
+ 
+ /* Really, userland should not be looking at any of this... */
+Index: include/linux/miscdevice.h
+===================================================================
+RCS file: /chaos/cvs/mlinux/include/linux/miscdevice.h,v
+retrieving revision 1.1.1.1
+retrieving revision 1.2
+diff -u -r1.1.1.1 -r1.2
+--- include/linux/miscdevice.h	11 Jul 2001 22:29:40 -0000	1.1.1.1
++++ include/linux/miscdevice.h	11 Jul 2001 22:41:10 -0000	1.2
+@@ -16,6 +16,8 @@
+ #define RTC_MINOR 135
+ #define SUN_OPENPROM_MINOR 139
+ #define NVRAM_MINOR 144
++#define DINO1_BARGRAPH_MINOR 160
++#define DINO1_CAN_MINOR 162
+ #define I2O_MINOR 166
+ #define MICROCODE_MINOR 184
+ #define MISC_DYNAMIC_MINOR 255

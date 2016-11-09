@@ -1,0 +1,45 @@
+Cluster Support Scripts/Programs for Meiko CS/2
+See DISCLAIMER for legalese.
+
+This package supports the LED bargraph and Control Area Network (CAN)
+devices on the Meiko CS/2 cluster under Linux.
+
+Command synopsis:
+
+canhosts.sample		sample /etc/canhosts file
+
+canobj			/etc/canobj database
+
+cancon [-f] node	connect to system console over CAN.
+
+			-f forces steals the connection if someone 
+			else is using it.
+
+			"node" is a name listed in /etc/canhosts.
+
+canctrl type obj node [hex data]
+			perform an arbitrary CAN object transaction.
+
+			Example:  hard reset node auk1
+			   ./canctrl wo reset auk1-h8 0x2
+			Example:  soft reset node auk1
+			   ./canctrl wo reset auk1
+
+candebug [-y|-n] 	set debugging level in CAN device driver
+
+canhb [new value]	get or set can heartbeat value
+	
+canping [-f] [-c #] node
+			"ping" a node via the can network using testrw (0x3ff)
+
+cansnoop [-p] [-h]	snoop the L-CAN network
+
+			-p puts the CAN chip in promiscuous mode
+
+			-h filters heartbeat packets
+
+canwhack		reset the CAN chip 
+
+leddemo			play with the LED bargraph
+
+elanclock		play with the elan nanosecond clock

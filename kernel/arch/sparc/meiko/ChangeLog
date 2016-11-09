@@ -1,0 +1,5 @@
+Fri Aug  3 16:12:41 PDT 2001
+	* added elan nanosec clock functions (elan.c)
+	* modified dino1_gettimeofday to use elan clock (timer.c)
+
+	* use obp.h functions (timer.c, irq.c)

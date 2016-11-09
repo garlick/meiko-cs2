@@ -1,0 +1,51 @@
+.\" $Id: cancon.8,v 1.1.1.1 2001/07/10 19:54:08 garlick Exp $
+.\"
+.TH CANCON 8 "14 May 1999"
+.SH NAME
+cancon \- connect to remote console of a Meiko CS/2 node
+.SH SYNOPSIS
+.B cancon
+.RB [-f]
+.RB hostname
+.SH DESCRIPTION
+.I cancon 
+is used to open up an interactive console on a remote node.  If the 
+console is already connected to another cancon, this will fail, unless
+.I -f 
+(force disconnect) is specified.
+.LP
+Once connected, typing &. (ampersand period) at the beginning of a line
+disconnects.
+.LP
+To send a WO to the BREAK object (which causes a soft reset in Linux,
+Solaris, or the PROM), type &# (ampersand pound).
+.LP
+To signal the RESET object in the node's H8 control microprocessor, which
+pulses the hardware reset line for the node, type &r (ampersand r).
+.LP
+Finally, typing &? (ampersand question mark) displays a help screen.
+.SH PROTOCOL
+.I cancon  
+begins by reading from the CONSOLE_CONNECT object on the specified node to 
+determine if there is already a console attached.
+.LP
+If 
+.I -f
+was specifed, an existing console connection is usurped by sending 
+FORCE_DISCONNECT to the other cancon.  The other cancon then executes
+its disconnect protocol, which involves writing to the CONSOLE_DISCONN
+object of the target node.  If that doesn't happen in a reasonable amount
+of time, we assume the other cancon died and we do the CONSOLE_DISCONN.
+.LP
+A connection is established by writing our object ID (unique on this node)
+and extended CAN address to the CONSOLE_CONNECT object.
+.LP
+Once a connection is established, cancon sends packets of type DAT to object
+zero on the target node, and the target node sends packets of type DAT to
+the object written to the CONSOLE_CONNECT object on the cancon node.
+.LP
+A disconnect is initiated by cancon by writing to the CONSOLE_DISCONN object.
+.SH AUTHORS
+Jim Garlick <garlick@llnl.gov>
+.SH SEE ALSO
+canctrl(8), canping(8), cansnoop(8), can(4)

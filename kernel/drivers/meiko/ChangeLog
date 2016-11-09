@@ -1,0 +1,22 @@
+Fri Jul 20 05:09:19 PDT 2001 garlick@llnl.gov
+	* Use obp.h functions to map registers (bargraph.c)
+	* Misc cleanup (all)
+
+Wed Jul 25 12:14:14 PDT 2001 garlick@llnl.gov
+	* VERBOSE flag (stand.mk, bargraph.c)
+	* standardize on uintN_t types for size critical objects (bargraph.c)
+	* bargraph_reg_t added with hard coded page offset padding (bargraph.c)
+	* removed vm_ops module usecount code (bargraph.c)
+
+	* Use obp.h functions (can*.c)
+
+	* fixed mmap support (elan.c)
+
+Fri Jul 27 04:22:37 PDT 2001 garlick@llnl.gov
+	* return old value not new in testrw object (can_obj.c)
+	* removed ring buffer locks (can_main.c, can_console.c)
+	* use safe copy_*_user functions (can_main.c, can_console.c)
+	* remove wait_key and setup functions (can_console.c)
+	* VERBOSE flag (can*.c)
+	* added snoopy ioctl for cansnoop to see outgoing packets (can_main.c)
+	* can_read/write return -EINTR not -ERESTARTSYS on sigpend (can_main.c)

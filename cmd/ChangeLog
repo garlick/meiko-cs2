@@ -1,0 +1,35 @@
+Wed Jul 25 19:21:43 PDT 2001 garlick@llnl.gov
+
+	* Added README, canobj, canhosts.template, DISCLAIMER
+	* Created cs2.spec file.
+	* Tested under kernel-2.2.19-6.2.7cs2.2
+
+	* Updated bargraph demo for new mmap/ioctl methods (leddemo.c)
+	
+	* Added elanclock.c
+
+	* Updated spec file for release 0.1-3
+
+Fri Jul 27 04:16:20 PDT 2001 garlick@llnl.gov
+
+	* Make canping send/ack synchronous with timeout/retry (canping.c)
+	* Added -f (flood) and -c (count) options (canping.c)
+	* Use elanclock instead of gettimeofday for measurement (canping.c)
+	* Return value indicates whether target responded (canping.c)
+
+	* Added TESTRW object to decode list (cansnoop.c)
+
+	* Added can_getobjbyid() and can_getobjbyname() (canlib.[c,h], canobj.h)
+	* Added can_str2type() and can_type2str() (canlib.[c,h])
+	* Added can_hb2str() and can_str2hb() (canlib.[c,h])
+	* Renamed canlib.[c,h] to can.[c,h], create libcan.a (all)
+	* Use above functions (all)
+
+	* Update for can_dat datatype and new struct alignment (all)
+
+	* Updated spec file for release 0.1-4
+
+Fri Aug  3 11:12:27 PDT 2001
+
+	* Moved leddemo to testled, elanclock to testclock and don't install
+	* check gettimeofday and elan nsec clock accuracy (elanclock.c)
