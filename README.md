@@ -14,3 +14,5 @@ LLNL at this point and our efforts focused on new hardware - the
 [Quadrics](https://en.wikipedia.org/wiki/Quadrics) elan3/4,
 which was the primary interconnect for our first production
 Linux clusters.
+
+![Image of Meiko CS/2](https://github.com/garlick/meiko-cs2/blob/master/doc/cs2.gif)
