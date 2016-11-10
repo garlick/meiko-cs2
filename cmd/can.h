@@ -1,8 +1,3 @@
-/*
- *    Copyright (C) 2000-2001  Regents of the University of California
- *    See ./DISCLAIMER
- */
-
 #ifndef _CAN_LIB_H
 #define _CAN_LIB_H
 
